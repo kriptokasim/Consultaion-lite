@@ -1,0 +1,5 @@
+{
+  "name": "Consultaion",
+  "description": "A platform that produces the best answer via multi-agent debate/voting using Gemini.",
+  "requestFramePermissions": []
+}
