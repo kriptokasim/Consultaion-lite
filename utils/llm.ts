@@ -14,7 +14,7 @@ export async function generateCompletion({ model, systemInstruction, prompt, jso
   // Explicitly use the provided OpenRouter key.
   // We ignore process.env.API_KEY here because it usually contains a Google GenAI key
   // which causes 401 Unauthorized errors when sent to OpenRouter endpoints.
-  const apiKey = "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";
+  const apiKey = "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";
   
   if (!apiKey) {
     throw new Error("API Key not found");
@@ -35,32 +35,57 @@ export async function generateCompletion({ model, systemInstruction, prompt, jso
     body.response_format = { type: "json_object" };
   }
 
-  try {
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": typeof window !== 'undefined' ? window.location.origin : "https://consultai.app",
-        "X-Title": "ConsultAI Debate",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
+  let attempt = 0;
+  const maxRetries = 3;
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`OpenRouter API Error: ${response.status} - ${errorData}`);
-    }
+  while (attempt < maxRetries) {
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": typeof window !== 'undefined' ? window.location.origin : "https://consultai.app",
+          "X-Title": "ConsultAI Debate",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
 
-    const data = await response.json();
-    
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content || "";
-    } else {
-      throw new Error("No content returned from model");
+      // Handle Rate Limits (429) by retrying with backoff
+      if (response.status === 429) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          const errorData = await response.text();
+          throw new Error(`OpenRouter API Error: ${response.status} - ${errorData}`);
+        }
+        console.warn(`Rate limit hit (429). Retrying attempt ${attempt + 1} in ${attempt * 2}s...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+        continue;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`OpenRouter API Error: ${response.status} - ${errorData}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.choices && data.choices.length > 0) {
+        return data.choices[0].message.content || "";
+      } else {
+        throw new Error("No content returned from model");
+      }
+    } catch (error) {
+      // If we've exhausted retries or it's a fatal error, rethrow
+      if (attempt >= maxRetries - 1) {
+        console.error("LLM Generation Failed:", error);
+        throw error;
+      }
+      // If it was a network error (fetch failed), increment and retry
+      attempt++;
+      await new Promise(resolve => setTimeout(resolve, attempt * 2000));
     }
-  } catch (error) {
-    console.error("LLM Generation Failed:", error);
-    throw error;
   }
+  
+  throw new Error("Failed to generate completion after multiple attempts");
 }

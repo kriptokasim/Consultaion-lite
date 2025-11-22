@@ -3,24 +3,6 @@ import { ModelOption } from "../types";
 
 export const AVAILABLE_MODELS: ModelOption[] = [
   {
-    id: "google/gemini-2.0-flash-lite-preview-02-05:free",
-    name: "Gemini 2.0 Flash Lite",
-    provider: "Google",
-    isFree: true
-  },
-  {
-    id: "google/gemini-2.0-pro-exp-02-05:free",
-    name: "Gemini 2.0 Pro",
-    provider: "Google",
-    isFree: true
-  },
-  {
-    id: "deepseek/deepseek-r1:free",
-    name: "DeepSeek R1",
-    provider: "DeepSeek",
-    isFree: true
-  },
-  {
     id: "meta-llama/llama-3.3-70b-instruct:free",
     name: "Llama 3.3 70B",
     provider: "Meta",
@@ -38,7 +20,18 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     provider: "Microsoft",
     isFree: true
   },
-  // Paid fallbacks if user has credits, or for comparison
+  {
+    id: "google/gemini-2.0-flash-exp:free",
+    name: "Gemini 2.0 Flash",
+    provider: "Google",
+    isFree: true
+  },
+  {
+    id: "deepseek/deepseek-r1:free",
+    name: "DeepSeek R1",
+    provider: "DeepSeek",
+    isFree: true
+  },
   {
     id: "openai/gpt-4o-mini",
     name: "GPT-4o Mini",
@@ -54,8 +47,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
 ];
 
 export const DEFAULT_MODELS = {
-  PRO: "google/gemini-2.0-flash-lite-preview-02-05:free",
-  CON: "deepseek/deepseek-r1:free",
-  JUDGE: "google/gemini-2.0-pro-exp-02-05:free",
-  MODERATOR: "google/gemini-2.0-flash-lite-preview-02-05:free"
+  PRO: "meta-llama/llama-3.3-70b-instruct:free",
+  CON: "mistralai/mistral-small-24b-instruct-2501:free",
+  JUDGE: "meta-llama/llama-3.3-70b-instruct:free",
+  MODERATOR: "microsoft/phi-3-mini-128k-instruct:free"
 };

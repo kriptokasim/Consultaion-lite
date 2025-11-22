@@ -83,13 +83,13 @@ const App: React.FC = () => {
     setActiveRole(AgentRole.MODERATOR);
     setCurrentAction("Concluding session...");
     
-    await wait(1000);
+    await wait(1500);
     const closingEntry = createEntry(AgentRole.MODERATOR, reason);
     setTranscript(prev => [...prev, closingEntry]);
     setActiveRole(null);
     
     try {
-      setCurrentAction("Drafting dossier...");
+      setCurrentAction("Drafting debate dossier...");
       const context = finalHistory.map(t => `${t.agentName} (${t.modelName}): ${t.text}`).join('\n');
       
       const summaryText = await generateCompletion({
@@ -103,7 +103,7 @@ const App: React.FC = () => {
       setFinalSummary("The debate concluded.");
     }
 
-    await wait(1000);
+    await wait(1500);
     stopDebate();
     setAppState('CONCLUDED');
   };
@@ -121,12 +121,16 @@ const App: React.FC = () => {
     let roundHistory = [...currentHistory];
 
     try {
-      // 1. Proponent
+      // --- PROPONENT TURN ---
       if (!isDebatingRef.current) return;
+      
       setActiveRole(AgentRole.PRO);
       const proModel = selectedModels[AgentRole.PRO];
       const proName = getModelName(AgentRole.PRO);
-      setCurrentAction(`${AGENTS[AgentRole.PRO].name} (${proName}) is presenting...`);
+      setCurrentAction(`${AGENTS[AgentRole.PRO].name} (${proName}) is arguing...`);
+      
+      // Minimum thinking time for UX
+      const proStartTime = Date.now();
       
       const proText = await generateCompletion({
         model: proModel,
@@ -134,19 +138,29 @@ const App: React.FC = () => {
         prompt: `Topic: ${topic}. History: ${context}. Round ${currentRound}/${MAX_ROUNDS}. Argue IN FAVOR. Under 80 words.`
       });
       
+      // Ensure visual presence of thinking state
+      const proElapsed = Date.now() - proStartTime;
+      if (proElapsed < 1500) await wait(1500 - proElapsed);
+
       setActiveRole(null);
       const proEntry = createEntry(AgentRole.PRO, proText || "I rest my case.");
       setTranscript(prev => [...prev, proEntry]);
       roundHistory.push(proEntry);
+      
+      // Dynamic reading time based on text length (approx 30ms per char), max 4s
+      const proReadTime = Math.min(Math.max(1500, proEntry.text.length * 30), 4000);
       setCurrentAction("..."); 
-      await wait(2000);
+      await wait(proReadTime);
 
-      // 2. Opponent
+      // --- OPPONENT TURN ---
       if (!isDebatingRef.current) return;
+      
       setActiveRole(AgentRole.CON);
       const conModel = selectedModels[AgentRole.CON];
       const conName = getModelName(AgentRole.CON);
-      setCurrentAction(`${AGENTS[AgentRole.CON].name} (${conName}) is responding...`);
+      setCurrentAction(`${AGENTS[AgentRole.CON].name} (${conName}) is rebutting...`);
+
+      const conStartTime = Date.now();
 
       const conText = await generateCompletion({
         model: conModel,
@@ -154,20 +168,28 @@ const App: React.FC = () => {
         prompt: `Topic: ${topic}. History: ${context}. Proponent said: "${proEntry.text}". Round ${currentRound}/${MAX_ROUNDS}. Argue AGAINST. Under 80 words.`
       });
 
+      const conElapsed = Date.now() - conStartTime;
+      if (conElapsed < 1500) await wait(1500 - conElapsed);
+
       setActiveRole(null);
       const conEntry = createEntry(AgentRole.CON, conText || "No further objections.");
       setTranscript(prev => [...prev, conEntry]);
       roundHistory.push(conEntry);
-      setCurrentAction("...");
-      await wait(2000);
 
-      // 3. Judge
+      const conReadTime = Math.min(Math.max(1500, conEntry.text.length * 30), 4000);
+      setCurrentAction("...");
+      await wait(conReadTime);
+
+      // --- JUDGE TURN ---
       if (!isDebatingRef.current) return;
+      
       setActiveRole(AgentRole.JUDGE);
       const judgeModel = selectedModels[AgentRole.JUDGE];
       const judgeName = getModelName(AgentRole.JUDGE);
       setCurrentAction(`The Chamber (${judgeName}) is deliberating...`);
-      await wait(1500);
+      
+      // Suspense delay before verdict
+      await wait(2000);
 
       let result = { proScore: 50, reasoning: "Evaluating...", isConcluded: false };
       
@@ -179,7 +201,6 @@ const App: React.FC = () => {
           jsonMode: true
         });
         
-        // Clean markdown code blocks if present (common with some models)
         const cleanJson = judgeRaw.replace(/```json/g, '').replace(/```/g, '').trim();
         result = JSON.parse(cleanJson);
       } catch (e) {
@@ -201,13 +222,18 @@ const App: React.FC = () => {
       }]);
 
       const isKnockout = result.proScore >= 85 || result.proScore <= 15;
+      
+      // Allow user to absorb the score change
+      setCurrentAction("Recording votes...");
+      await wait(2500);
+
       if (currentRound >= MIN_ROUNDS && (result.isConcluded || isKnockout)) {
         const reason = isKnockout ? "A decisive victory secured." : "Consensus reached.";
         concludeDebate(roundHistory, reason);
         return;
       }
 
-      setCurrentAction("Preparing next round...");
+      setCurrentAction("Moving to next round...");
       await wait(1500);
 
       if (isDebatingRef.current) {
@@ -238,10 +264,10 @@ const App: React.FC = () => {
 
     setIsProcessing(true);
     setActiveRole(AgentRole.MODERATOR);
-    setCurrentAction("Initializing...");
+    setCurrentAction("Initializing session...");
     
     try {
-      await wait(800);
+      await wait(1000);
       const introText = await generateCompletion({
         model: DEFAULT_MODELS.MODERATOR,
         systemInstruction: AGENTS[AgentRole.MODERATOR].systemInstruction,
@@ -251,8 +277,10 @@ const App: React.FC = () => {
       const introEntry = createEntry(AgentRole.MODERATOR, introText || "Welcome to the debate.");
       setActiveRole(null);
       setTranscript([introEntry]);
-      setCurrentAction("Starting Round 1...");
-      await wait(1500);
+      
+      setCurrentAction("Opening the floor...");
+      await wait(2000); // Reading time for moderator intro
+      
       conductDebateRound([introEntry], 1);
     } catch (e) {
       console.error(e);
@@ -474,11 +502,11 @@ const App: React.FC = () => {
                     {activeRole !== AgentRole.MODERATOR && (
                       <img src={AGENTS[activeRole].avatarUrl} className="w-8 h-8 rounded-lg opacity-50 grayscale" />
                     )}
-                    <div className="bg-white/50 px-4 py-3 rounded-2xl flex items-center gap-1.5">
+                    <div className="bg-white/50 px-4 py-3 rounded-2xl flex items-center gap-1.5 shadow-sm border border-white/20">
                        <span className="text-xs font-bold text-stone-400 mr-1">{getModelName(activeRole)}</span>
-                       <div className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
-                       <div className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></div>
-                       <div className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
+                       <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
+                       <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></div>
+                       <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
                     </div>
                  </div>
                )}
@@ -487,7 +515,13 @@ const App: React.FC = () => {
              </div>
 
              {/* Bottom Controls */}
-             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20 w-full">
+               {currentAction && isProcessing && (
+                 <div className="text-xs font-bold uppercase tracking-widest text-mocha-800/40 animate-pulse">
+                   {currentAction}
+                 </div>
+               )}
+               
                {isProcessing ? (
                  <button 
                    onClick={stopDebate}
