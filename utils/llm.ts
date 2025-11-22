@@ -11,9 +11,12 @@ interface GenerateOptions {
 }
 
 export async function generateCompletion({ model, systemInstruction, prompt, jsonMode = false }: GenerateOptions): Promise<string> {
-  // Retrieve API key from environment variables to keep it secure and out of the repo.
-  // Prioritize OPENROUTER_API_KEY if set, otherwise fall back to API_KEY.
-  const apiKey = process.env.OPENROUTER_API_KEY || process.env.API_KEY;
+  // Retrieve API key from environment variables.
+  // Checks for standard and common framework-specific prefixes (Vite, CRA).
+  const apiKey = process.env.OPENROUTER_API_KEY || 
+                 process.env.VITE_OPENROUTER_API_KEY || 
+                 process.env.REACT_APP_OPENROUTER_API_KEY || 
+                 process.env.API_KEY;
   
   if (!apiKey) {
     console.error("Missing API Key. Please set OPENROUTER_API_KEY in your .env file.");
