@@ -11,13 +11,13 @@ interface GenerateOptions {
 }
 
 export async function generateCompletion({ model, systemInstruction, prompt, jsonMode = false }: GenerateOptions): Promise<string> {
-  // Explicitly use the provided OpenRouter key.
-  // We ignore process.env.API_KEY here because it usually contains a Google GenAI key
-  // which causes 401 Unauthorized errors when sent to OpenRouter endpoints.
-  const apiKey = "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";
+  // Retrieve API key from environment variables to keep it secure and out of the repo.
+  // Prioritize OPENROUTER_API_KEY if set, otherwise fall back to API_KEY.
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.API_KEY;
   
   if (!apiKey) {
-    throw new Error("API Key not found");
+    console.error("Missing API Key. Please set OPENROUTER_API_KEY in your .env file.");
+    throw new Error("API Key not found. Please configure OPENROUTER_API_KEY in your environment.");
   }
 
   const messages = [

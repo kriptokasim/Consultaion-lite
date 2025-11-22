@@ -9,15 +9,9 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     isFree: true
   },
   {
-    id: "mistralai/mistral-small-24b-instruct-2501:free",
-    name: "Mistral Small 3",
-    provider: "Mistral",
-    isFree: true
-  },
-  {
-    id: "microsoft/phi-3-mini-128k-instruct:free",
-    name: "Phi-3 Mini",
-    provider: "Microsoft",
+    id: "qwen/qwen-2.5-vl-72b-instruct:free",
+    name: "Qwen 2.5 72B",
+    provider: "Qwen",
     isFree: true
   },
   {
@@ -27,8 +21,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     isFree: true
   },
   {
-    id: "deepseek/deepseek-r1:free",
-    name: "DeepSeek R1",
+    id: "deepseek/deepseek-r1-distill-llama-70b:free",
+    name: "DeepSeek R1 (Llama)",
     provider: "DeepSeek",
     isFree: true
   },
@@ -46,9 +40,10 @@ export const AVAILABLE_MODELS: ModelOption[] = [
   }
 ];
 
+// Distribute defaults across different providers to minimize rate limit collisions
 export const DEFAULT_MODELS = {
-  PRO: "meta-llama/llama-3.3-70b-instruct:free",
-  CON: "mistralai/mistral-small-24b-instruct-2501:free",
-  JUDGE: "meta-llama/llama-3.3-70b-instruct:free",
-  MODERATOR: "microsoft/phi-3-mini-128k-instruct:free"
+  PRO: "meta-llama/llama-3.3-70b-instruct:free",      // Meta
+  CON: "qwen/qwen-2.5-vl-72b-instruct:free",          // Qwen/Alibaba
+  JUDGE: "google/gemini-2.0-flash-exp:free",          // Google
+  MODERATOR: "meta-llama/llama-3.3-70b-instruct:free" // Meta (Reliable fallback)
 };
