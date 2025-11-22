@@ -49,4 +49,15 @@ export interface RoundSummary {
   };
 }
 
+export interface SavedDebate {
+  id: string;
+  topic: string;
+  date: number;
+  transcript: TranscriptEntry[];
+  rounds: RoundSummary[];
+  voteState: VoteState;
+  finalSummary: string;
+  winner: string;
+}
+
 export type AppState = 'SETUP' | 'DEBATING' | 'CONCLUDED';

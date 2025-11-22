@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
     <title>Consultaion | Multi-Agent Debate</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
@@ -32,6 +32,10 @@
               },
               stone: {
                 850: '#292524',
+              },
+              ink: {
+                red: '#b91c1c',
+                green: '#15803d',
               }
             },
             fontFamily: {
@@ -43,6 +47,7 @@
               'parchment': '0 4px 6px -1px rgba(62, 39, 35, 0.1), 0 2px 4px -1px rgba(62, 39, 35, 0.06)',
               'chamber': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
               'podium': '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+              'stamp': '0 0 0 3px currentColor, inset 0 0 0 3px currentColor',
             },
             animation: {
               'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -51,6 +56,8 @@
               'message-pop': 'messagePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
               'gavel-strike': 'gavelStrike 0.6s ease-out forwards',
               'scale-in': 'scaleIn 0.4s ease-out forwards',
+              'stamp-drop': 'stampDrop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              'ticker': 'ticker 20s linear infinite',
             },
             keyframes: {
               fadeIn: {
@@ -74,6 +81,14 @@
               scaleIn: {
                 '0%': { transform: 'scale(0)' },
                 '100%': { transform: 'scale(1)' },
+              },
+              stampDrop: {
+                '0%': { opacity: '0', transform: 'scale(3) rotate(-15deg)' },
+                '100%': { opacity: '1', transform: 'scale(1) rotate(-2deg)' },
+              },
+              ticker: {
+                '0%': { transform: 'translateX(100%)' },
+                '100%': { transform: 'translateX(-100%)' }
               }
             }
           }
@@ -116,11 +131,19 @@
       }
       .prose-dropcap::first-letter {
         font-family: 'Cinzel', serif;
-        font-size: 3em;
+        font-size: 3.5em;
         float: left;
-        margin-top: -0.15em;
-        margin-right: 0.1em;
+        line-height: 0.8;
+        margin-top: 0.1em;
+        margin-right: 0.15em;
+        margin-bottom: -0.1em;
         color: #d97706;
+        text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+      }
+      .stamp-ink {
+        mix-blend-mode: multiply;
+        mask-image: url("data:image/svg+xml,%3Csvg width='200' height='100' viewBox='0 0 200 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+        mask-mode: alpha;
       }
     </style>
   <script type="importmap">
